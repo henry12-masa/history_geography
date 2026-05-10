@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>総合クイズサイト200問</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:"Yu Gothic","Hiragino Sans",sans-serif;background:linear-gradient(135deg,#fff3d4,#8fd3ff);min-height:100vh;color:#222}
+.ad-top{position:fixed;top:12px;right:12px;width:300px;height:90px;border:2px dashed #555;border-radius:12px;background:white;display:flex;align-items:center;justify-content:center;text-align:center;z-index:10;font-size:14px;color:#555}
+.wrap{max-width:900px;margin:auto;padding:120px 16px 40px}
+.game{background:rgba(255,255,255,.96);border:4px solid #555;border-radius:24px;padding:26px;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.22)}
+h1{margin-top:0;font-size:34px}
+h2{margin-bottom:6px}
+.menu{display:grid;gap:14px;margin-top:20px}
+button{font-size:18px;padding:14px;border:none;border-radius:14px;cursor:pointer;background:#1976a3;color:white;font-weight:bold;transition:.15s}
+button:hover{transform:scale(1.03);opacity:.95}
+.history{background:#8b5a2b}
+.geo{background:#1976a3}
+.back{background:#555}
+.status{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-weight:bold;margin-bottom:18px;background:#f5f5f5;border-radius:12px;padding:10px}
+.question{font-size:22px;font-weight:bold;background:#f3f8ff;border-radius:16px;padding:22px;margin-bottom:20px;line-height:1.6}
+.choices{display:grid;gap:12px}
+.correct{background:#2e8b57!important}
+.wrong{background:#b22222!important}
+.result{font-size:22px;font-weight:bold;margin-top:18px;min-height:32px}
+.comment{margin-top:12px;font-size:15px;color:#345;line-height:1.6}
+.next{margin-top:18px;background:#1f4e79;display:none}
+.restart{margin-top:18px;background:#6b3fa0;display:none}
+.ad-bottom{margin-top:24px;height:100px;border:2px dashed #555;border-radius:14px;background:white;display:flex;justify-content:center;align-items:center;text-align:center;font-size:14px;color:#555}
+.hidden{display:none}
+.badge{display:inline-block;background:#fff3d4;border:1px solid #d3a64d;border-radius:999px;padding:6px 12px;margin:4px;font-weight:bold}
+.small{font-size:14px;color:#555;line-height:1.6}
+@media(max-width:900px){.ad-top{position:static;width:auto;height:70px;margin:12px}.wrap{padding-top:20px}h1{font-size:28px}.question{font-size:19px}button{font-size:16px}}
+</style>
+</head>
+<body>
+
+<div class="ad-top">広告枠・右上<br>AdSenseコードはここ</div>
+
+<div class="wrap">
+<div class="game">
+<h1>🎮 総合クイズサイト200問</h1>
+
+<div id="categoryMenu">
+  <p>遊びたいジャンルを選んでください</p>
+  <div>
+    <span class="badge">🏯 歴史100問</span>
+    <span class="badge">🌏 地理100問</span>
+    <span class="badge">合計200問</span>
+  </div>
+  <div class="menu">
+    <button class="history" onclick="selectCategory('history')">🏯 歴史クイズ</button>
+    <button class="geo" onclick="selectCategory('geo')">🌏 地理クイズ</button>
+    <button onclick="selectCategory('mix')">🎲 歴史＋地理ミックス</button>
+  </div>
+</div>
+
+<div id="levelMenu" class="hidden">
+  <h2 id="categoryTitle"></h2>
+  <p>難易度を選んでください</p>
+  <div class="menu">
+    <button onclick="startGame('easy')">初級</button>
+    <button onclick="startGame('normal')">中級</button>
+    <button onclick="startGame('hard')">上級</button>
+    <button onclick="startGame('all')">全問ランダム</button>
+    <button class="back" onclick="backToCategory()">ジャンル選択に戻る</button>
+  </div>
+  <p class="small">※ミックスを選ぶと、歴史と地理を混ぜて出題します。</p>
+</div>
+
+<div id="quiz" class="hidden">
+  <div class="status">
+    <div>ジャンル：<span id="categoryName"></span></div>
+    <div>難易度：<span id="levelName"></span></div>
+    <div>問題：<span id="count"></span>/<span id="total"></span></div>
+    <div>スコア：<span id="score">0</span></div>
+  </div>
+
+  <div class="question" id="question"></div>
+  <div class="choices" id="choices"></div>
+  <div class="result" id="result"></div>
+  <div class="comment" id="comment"></div>
+
+  <button class="next" id="nextBtn" onclick="nextQuestion()">次の問題へ</button>
+  <button class="restart" id="restartBtn" onclick="backToLevel()">難易度選択に戻る</button>
+</div>
+
+<div class="ad-bottom">広告枠・下部<br>AdSenseコードはここ</div>
+</div>
+</div>
+
+<script>
+const quizDB = {"history": [{"category": "history", "level": "easy", "q": "鎌倉幕府を開いた人物は？", "c": ["源頼朝", "平清盛", "足利尊氏", "徳川家康"], "a": "源頼朝", "e": "源頼朝は鎌倉幕府を開いた人物です。"}, {"category": "history", "level": "easy", "q": "江戸幕府を開いた人物は？", "c": ["徳川家康", "豊臣秀吉", "織田信長", "徳川吉宗"], "a": "徳川家康", "e": "1603年に徳川家康が江戸幕府を開きました。"}, {"category": "history", "level": "easy", "q": "本能寺の変で討たれた人物は？", "c": ["織田信長", "武田信玄", "上杉謙信", "伊達政宗"], "a": "織田信長", "e": "1582年、本能寺の変で織田信長が討たれました。"}, {"category": "history", "level": "easy", "q": "関ヶ原の戦いが起きた年は？", "c": ["1600年", "1192年", "1333年", "1868年"], "a": "1600年", "e": "関ヶ原の戦いは1600年です。"}, {"category": "history", "level": "easy", "q": "明治維新で終わった幕府は？", "c": ["江戸幕府", "鎌倉幕府", "室町幕府", "奈良幕府"], "a": "江戸幕府", "e": "明治維新によって江戸幕府は終わりました。"}, {"category": "history", "level": "easy", "q": "奈良時代の都は？", "c": ["平城京", "平安京", "鎌倉", "江戸"], "a": "平城京", "e": "奈良時代の都は平城京です。"}, {"category": "history", "level": "easy", "q": "平安時代の都は？", "c": ["平安京", "平城京", "藤原京", "大宰府"], "a": "平安京", "e": "794年に平安京へ遷都されました。"}, {"category": "history", "level": "easy", "q": "聖徳太子が定めたとされるものは？", "c": ["十七条の憲法", "武家諸法度", "御成敗式目", "五箇条の御誓文"], "a": "十七条の憲法", "e": "聖徳太子は十七条の憲法で知られます。"}, {"category": "history", "level": "easy", "q": "源平合戦で滅びた一族は？", "c": ["平氏", "源氏", "藤原氏", "北条氏"], "a": "平氏", "e": "壇ノ浦の戦いで平氏が滅びました。"}, {"category": "history", "level": "easy", "q": "室町幕府を開いた人物は？", "c": ["足利尊氏", "源頼朝", "徳川家康", "北条時政"], "a": "足利尊氏", "e": "足利尊氏が室町幕府を開きました。"}, {"category": "history", "level": "easy", "q": "黒船を率いて来航した人物は？", "c": ["ペリー", "ザビエル", "ナポレオン", "コロンブス"], "a": "ペリー", "e": "1853年、ペリーが浦賀に来航しました。"}, {"category": "history", "level": "easy", "q": "キリスト教を日本に伝えた人物は？", "c": ["フランシスコ・ザビエル", "ペリー", "ルター", "マッカーサー"], "a": "フランシスコ・ザビエル", "e": "1549年にザビエルが来日しました。"}, {"category": "history", "level": "easy", "q": "豊臣秀吉が行った武器を取り上げる政策は？", "c": ["刀狩", "参勤交代", "廃藩置県", "楽市楽座"], "a": "刀狩", "e": "刀狩は農民から武器を取り上げる政策です。"}, {"category": "history", "level": "easy", "q": "江戸時代、大名を江戸に通わせた制度は？", "c": ["参勤交代", "班田収授", "太閤検地", "地租改正"], "a": "参勤交代", "e": "参勤交代は大名統制の制度です。"}, {"category": "history", "level": "easy", "q": "大化の改新の中心人物は？", "c": ["中大兄皇子", "坂本龍馬", "源義経", "西郷隆盛"], "a": "中大兄皇子", "e": "中大兄皇子と中臣鎌足が中心です。"}, {"category": "history", "level": "easy", "q": "『源氏物語』の作者は？", "c": ["紫式部", "清少納言", "卑弥呼", "小野小町"], "a": "紫式部", "e": "源氏物語の作者は紫式部です。"}, {"category": "history", "level": "easy", "q": "『枕草子』の作者は？", "c": ["清少納言", "紫式部", "和泉式部", "北条政子"], "a": "清少納言", "e": "枕草子の作者は清少納言です。"}, {"category": "history", "level": "easy", "q": "邪馬台国の女王は？", "c": ["卑弥呼", "推古天皇", "持統天皇", "北条政子"], "a": "卑弥呼", "e": "邪馬台国の女王として卑弥呼が知られます。"}, {"category": "history", "level": "easy", "q": "日本最古級の歌集は？", "c": ["万葉集", "源氏物語", "平家物語", "古今和歌集"], "a": "万葉集", "e": "万葉集は日本最古級の歌集です。"}, {"category": "history", "level": "easy", "q": "豊臣秀吉が全国の田畑を調べた政策は？", "c": ["太閤検地", "刀狩", "参勤交代", "地租改正"], "a": "太閤検地", "e": "太閤検地で土地や収穫量を調べました。"}, {"category": "history", "level": "easy", "q": "江戸時代に外国との交流を制限した政策は？", "c": ["鎖国", "開国", "廃藩置県", "大政奉還"], "a": "鎖国", "e": "江戸幕府は対外交流を制限しました。"}, {"category": "history", "level": "easy", "q": "幕末に大政奉還を行った将軍は？", "c": ["徳川慶喜", "徳川家康", "徳川吉宗", "徳川家光"], "a": "徳川慶喜", "e": "徳川慶喜が大政奉還を行いました。"}, {"category": "history", "level": "easy", "q": "明治時代に藩を廃止して県を置いた改革は？", "c": ["廃藩置県", "地租改正", "版籍奉還", "学制"], "a": "廃藩置県", "e": "1871年に廃藩置県が行われました。"}, {"category": "history", "level": "easy", "q": "初代内閣総理大臣は？", "c": ["伊藤博文", "大隈重信", "山県有朋", "西郷隆盛"], "a": "伊藤博文", "e": "日本の初代内閣総理大臣は伊藤博文です。"}, {"category": "history", "level": "easy", "q": "日本国憲法が施行された年は？", "c": ["1947年", "1945年", "1951年", "1964年"], "a": "1947年", "e": "日本国憲法は1947年5月3日に施行されました。"}, {"category": "history", "level": "easy", "q": "織田信長が商業を活発にするため進めた政策は？", "c": ["楽市楽座", "刀狩", "参勤交代", "廃藩置県"], "a": "楽市楽座", "e": "楽市楽座は市場の自由化を進める政策です。"}, {"category": "history", "level": "easy", "q": "江戸幕府の中心だった城は？", "c": ["江戸城", "大阪城", "姫路城", "熊本城"], "a": "江戸城", "e": "江戸幕府の政治の中心は江戸城でした。"}, {"category": "history", "level": "easy", "q": "徳川家康が勝利した大きな戦いは？", "c": ["関ヶ原の戦い", "壇ノ浦の戦い", "承久の乱", "応仁の乱"], "a": "関ヶ原の戦い", "e": "関ヶ原の戦いで家康は天下を決定づけました。"}, {"category": "history", "level": "easy", "q": "明治政府が進めた近代産業育成政策は？", "c": ["殖産興業", "参勤交代", "刀狩", "鎖国"], "a": "殖産興業", "e": "殖産興業は近代産業を育てる政策です。"}, {"category": "history", "level": "easy", "q": "明治時代に首都となった都市は？", "c": ["東京", "京都", "大阪", "奈良"], "a": "東京", "e": "江戸は東京と改められました。"}, {"category": "history", "level": "easy", "q": "江戸時代の代表的な交通制度は？", "c": ["五街道", "律令制", "公地公民", "班田収授"], "a": "五街道", "e": "江戸時代には五街道が整備されました。"}, {"category": "history", "level": "easy", "q": "戦国時代に天下統一を進めた三英傑に入らない人物は？", "c": ["源頼朝", "織田信長", "豊臣秀吉", "徳川家康"], "a": "源頼朝", "e": "三英傑は信長・秀吉・家康です。"}, {"category": "history", "level": "easy", "q": "日本で最初の本格的な武家政権は？", "c": ["鎌倉幕府", "江戸幕府", "室町幕府", "明治政府"], "a": "鎌倉幕府", "e": "鎌倉幕府は最初の本格的な武家政権です。"}, {"category": "history", "level": "easy", "q": "江戸時代の貨幣経済で発展した町人文化の一つは？", "c": ["元禄文化", "縄文文化", "飛鳥文化", "古墳文化"], "a": "元禄文化", "e": "元禄文化は町人文化として発展しました。"}, {"category": "history", "level": "normal", "q": "応仁の乱が始まった年は？", "c": ["1467年", "1333年", "1600年", "1185年"], "a": "1467年", "e": "応仁の乱は1467年に始まり、戦国時代のきっかけとなりました。"}, {"category": "history", "level": "normal", "q": "承久の乱で敗れた上皇は？", "c": ["後鳥羽上皇", "白河上皇", "後醍醐天皇", "鳥羽上皇"], "a": "後鳥羽上皇", "e": "承久の乱では後鳥羽上皇が幕府に敗れました。"}, {"category": "history", "level": "normal", "q": "御成敗式目を制定した人物は？", "c": ["北条泰時", "源頼朝", "足利尊氏", "徳川家康"], "a": "北条泰時", "e": "1232年、北条泰時が御成敗式目を制定しました。"}, {"category": "history", "level": "normal", "q": "建武の新政を行った天皇は？", "c": ["後醍醐天皇", "聖武天皇", "天武天皇", "明治天皇"], "a": "後醍醐天皇", "e": "鎌倉幕府滅亡後、後醍醐天皇が建武の新政を行いました。"}, {"category": "history", "level": "normal", "q": "南北朝を合一した室町幕府の将軍は？", "c": ["足利義満", "足利尊氏", "足利義政", "足利義昭"], "a": "足利義満", "e": "足利義満の時代に南北朝が合一しました。"}, {"category": "history", "level": "normal", "q": "金閣を建てた人物は？", "c": ["足利義満", "足利義政", "豊臣秀吉", "徳川家光"], "a": "足利義満", "e": "金閣は足利義満によって建てられました。"}, {"category": "history", "level": "normal", "q": "銀閣を建てた人物は？", "c": ["足利義政", "足利義満", "徳川家康", "北条泰時"], "a": "足利義政", "e": "銀閣は足利義政にゆかりがあります。"}, {"category": "history", "level": "normal", "q": "長篠の戦いで鉄砲を有効に使った人物は？", "c": ["織田信長", "源義経", "足利尊氏", "西郷隆盛"], "a": "織田信長", "e": "長篠の戦いでは鉄砲隊の活用が有名です。"}, {"category": "history", "level": "normal", "q": "桶狭間の戦いで織田信長に敗れた人物は？", "c": ["今川義元", "武田信玄", "上杉謙信", "明智光秀"], "a": "今川義元", "e": "桶狭間の戦いで今川義元が討たれました。"}, {"category": "history", "level": "normal", "q": "大坂の陣で滅びた家は？", "c": ["豊臣家", "徳川家", "足利家", "北条家"], "a": "豊臣家", "e": "大坂の陣で豊臣家は滅びました。"}, {"category": "history", "level": "normal", "q": "武家諸法度を定めた幕府は？", "c": ["江戸幕府", "鎌倉幕府", "室町幕府", "明治政府"], "a": "江戸幕府", "e": "武家諸法度は大名統制の法令です。"}, {"category": "history", "level": "normal", "q": "享保の改革を行った将軍は？", "c": ["徳川吉宗", "徳川家康", "徳川家光", "徳川慶喜"], "a": "徳川吉宗", "e": "徳川吉宗は享保の改革を行いました。"}, {"category": "history", "level": "normal", "q": "寛政の改革を行った老中は？", "c": ["松平定信", "田沼意次", "水野忠邦", "井伊直弼"], "a": "松平定信", "e": "松平定信が寛政の改革を行いました。"}, {"category": "history", "level": "normal", "q": "天保の改革を行った老中は？", "c": ["水野忠邦", "松平定信", "田沼意次", "大久保利通"], "a": "水野忠邦", "e": "天保の改革は水野忠邦が行いました。"}, {"category": "history", "level": "normal", "q": "日米和親条約が結ばれた年は？", "c": ["1854年", "1853年", "1867年", "1871年"], "a": "1854年", "e": "日米和親条約は1854年に結ばれました。"}, {"category": "history", "level": "normal", "q": "安政の大獄を行った人物は？", "c": ["井伊直弼", "坂本龍馬", "西郷隆盛", "徳川吉宗"], "a": "井伊直弼", "e": "井伊直弼は安政の大獄で反対派を弾圧しました。"}, {"category": "history", "level": "normal", "q": "薩長同盟の仲介で知られる人物は？", "c": ["坂本龍馬", "勝海舟", "伊藤博文", "板垣退助"], "a": "坂本龍馬", "e": "坂本龍馬は薩長同盟の仲介で知られます。"}, {"category": "history", "level": "normal", "q": "五箇条の御誓文を出した時代は？", "c": ["明治時代", "江戸時代", "鎌倉時代", "奈良時代"], "a": "明治時代", "e": "五箇条の御誓文は明治政府の基本方針です。"}, {"category": "history", "level": "normal", "q": "地租改正で税の基準となったものは？", "c": ["地価", "収穫量", "人口", "米の量"], "a": "地価", "e": "地租改正では地価を基準に税を納めました。"}, {"category": "history", "level": "normal", "q": "自由民権運動で有名な人物は？", "c": ["板垣退助", "徳川家康", "源頼朝", "足利義満"], "a": "板垣退助", "e": "板垣退助は自由民権運動の中心人物です。"}, {"category": "history", "level": "normal", "q": "大日本帝国憲法が発布された年は？", "c": ["1889年", "1868年", "1894年", "1905年"], "a": "1889年", "e": "大日本帝国憲法は1889年に発布されました。"}, {"category": "history", "level": "normal", "q": "日清戦争が始まった年は？", "c": ["1894年", "1904年", "1914年", "1877年"], "a": "1894年", "e": "日清戦争は1894年に始まりました。"}, {"category": "history", "level": "normal", "q": "日露戦争が始まった年は？", "c": ["1904年", "1894年", "1914年", "1931年"], "a": "1904年", "e": "日露戦争は1904年に始まりました。"}, {"category": "history", "level": "normal", "q": "第一次世界大戦が始まった年は？", "c": ["1914年", "1918年", "1939年", "1945年"], "a": "1914年", "e": "第一次世界大戦は1914年に始まりました。"}, {"category": "history", "level": "normal", "q": "満州事変が起きた年は？", "c": ["1931年", "1923年", "1937年", "1941年"], "a": "1931年", "e": "満州事変は1931年です。"}, {"category": "history", "level": "normal", "q": "日中戦争が本格化した年は？", "c": ["1937年", "1931年", "1941年", "1945年"], "a": "1937年", "e": "盧溝橋事件をきっかけに1937年から本格化しました。"}, {"category": "history", "level": "normal", "q": "太平洋戦争が始まった年は？", "c": ["1941年", "1939年", "1945年", "1914年"], "a": "1941年", "e": "太平洋戦争は1941年に始まりました。"}, {"category": "history", "level": "normal", "q": "ポツダム宣言を日本が受諾した年は？", "c": ["1945年", "1941年", "1951年", "1947年"], "a": "1945年", "e": "日本は1945年にポツダム宣言を受諾しました。"}, {"category": "history", "level": "normal", "q": "サンフランシスコ平和条約が結ばれた年は？", "c": ["1951年", "1945年", "1947年", "1964年"], "a": "1951年", "e": "サンフランシスコ平和条約は1951年に調印されました。"}, {"category": "history", "level": "normal", "q": "東京オリンピックが初めて開催された年は？", "c": ["1964年", "1970年", "1945年", "1989年"], "a": "1964年", "e": "東京オリンピックは1964年に初開催されました。"}, {"category": "history", "level": "normal", "q": "平安時代に摂関政治で栄えた氏族は？", "c": ["藤原氏", "平氏", "源氏", "北条氏"], "a": "藤原氏", "e": "藤原氏は摂関政治で大きな力を持ちました。"}, {"category": "history", "level": "normal", "q": "鎌倉幕府で執権政治を行った氏族は？", "c": ["北条氏", "藤原氏", "足利氏", "徳川氏"], "a": "北条氏", "e": "北条氏は鎌倉幕府で執権政治を行いました。"}, {"category": "history", "level": "normal", "q": "幕末に開港された港として正しいものは？", "c": ["横浜", "京都", "奈良", "甲府"], "a": "横浜", "e": "横浜は開港場として発展しました。"}, {"category": "history", "level": "hard", "q": "白村江の戦いが起きた年は？", "c": ["663年", "645年", "701年", "794年"], "a": "663年", "e": "白村江の戦いは663年に起きました。"}, {"category": "history", "level": "hard", "q": "大宝律令が制定された年は？", "c": ["701年", "645年", "710年", "794年"], "a": "701年", "e": "大宝律令は701年に制定されました。"}, {"category": "history", "level": "hard", "q": "平城京遷都の年は？", "c": ["710年", "794年", "701年", "1185年"], "a": "710年", "e": "710年、都は平城京に移されました。"}, {"category": "history", "level": "hard", "q": "平安京遷都の年は？", "c": ["794年", "710年", "784年", "894年"], "a": "794年", "e": "794年に平安京へ遷都されました。"}, {"category": "history", "level": "hard", "q": "遣唐使が停止された年は？", "c": ["894年", "794年", "710年", "907年"], "a": "894年", "e": "菅原道真の進言により遣唐使は停止されました。"}, {"category": "history", "level": "hard", "q": "保元の乱が起きた年は？", "c": ["1156年", "1159年", "1185年", "1221年"], "a": "1156年", "e": "保元の乱は1156年です。"}, {"category": "history", "level": "hard", "q": "平治の乱が起きた年は？", "c": ["1159年", "1156年", "1180年", "1185年"], "a": "1159年", "e": "平治の乱は1159年です。"}, {"category": "history", "level": "hard", "q": "壇ノ浦の戦いが起きた年は？", "c": ["1185年", "1192年", "1221年", "1333年"], "a": "1185年", "e": "壇ノ浦の戦いで平氏が滅亡しました。"}, {"category": "history", "level": "hard", "q": "承久の乱が起きた年は？", "c": ["1221年", "1232年", "1274年", "1333年"], "a": "1221年", "e": "承久の乱は1221年に起きました。"}, {"category": "history", "level": "hard", "q": "御成敗式目が制定された年は？", "c": ["1232年", "1221年", "1274年", "1333年"], "a": "1232年", "e": "御成敗式目は1232年制定です。"}, {"category": "history", "level": "hard", "q": "元寇の文永の役は何年？", "c": ["1274年", "1281年", "1221年", "1333年"], "a": "1274年", "e": "文永の役は1274年です。"}, {"category": "history", "level": "hard", "q": "元寇の弘安の役は何年？", "c": ["1281年", "1274年", "1333年", "1467年"], "a": "1281年", "e": "弘安の役は1281年です。"}, {"category": "history", "level": "hard", "q": "鎌倉幕府が滅亡した年は？", "c": ["1333年", "1336年", "1392年", "1467年"], "a": "1333年", "e": "鎌倉幕府は1333年に滅亡しました。"}, {"category": "history", "level": "hard", "q": "室町幕府が開かれた年は？", "c": ["1336年", "1333年", "1392年", "1467年"], "a": "1336年", "e": "足利尊氏が1336年に武家政権を開始しました。"}, {"category": "history", "level": "hard", "q": "南北朝合一の年は？", "c": ["1392年", "1336年", "1467年", "1573年"], "a": "1392年", "e": "南北朝は1392年に合一しました。"}, {"category": "history", "level": "hard", "q": "鉄砲が種子島に伝来した年は？", "c": ["1543年", "1549年", "1560年", "1575年"], "a": "1543年", "e": "鉄砲伝来は1543年です。"}, {"category": "history", "level": "hard", "q": "ザビエルが来日した年は？", "c": ["1549年", "1543年", "1560年", "1582年"], "a": "1549年", "e": "ザビエルは1549年に来日しました。"}, {"category": "history", "level": "hard", "q": "桶狭間の戦いの年は？", "c": ["1560年", "1573年", "1575年", "1582年"], "a": "1560年", "e": "桶狭間の戦いは1560年です。"}, {"category": "history", "level": "hard", "q": "室町幕府が滅亡した年は？", "c": ["1573年", "1560年", "1582年", "1600年"], "a": "1573年", "e": "足利義昭が追放され、室町幕府は滅亡しました。"}, {"category": "history", "level": "hard", "q": "長篠の戦いの年は？", "c": ["1575年", "1560年", "1582年", "1600年"], "a": "1575年", "e": "長篠の戦いは1575年です。"}, {"category": "history", "level": "hard", "q": "本能寺の変の年は？", "c": ["1582年", "1575年", "1590年", "1600年"], "a": "1582年", "e": "本能寺の変は1582年です。"}, {"category": "history", "level": "hard", "q": "豊臣秀吉が小田原攻めを行った年は？", "c": ["1590年", "1582年", "1600年", "1603年"], "a": "1590年", "e": "1590年の小田原攻めで北条氏を滅ぼしました。"}, {"category": "history", "level": "hard", "q": "江戸幕府成立の年は？", "c": ["1603年", "1600年", "1615年", "1639年"], "a": "1603年", "e": "1603年、徳川家康が征夷大将軍となりました。"}, {"category": "history", "level": "hard", "q": "大坂夏の陣の年は？", "c": ["1615年", "1603年", "1635年", "1639年"], "a": "1615年", "e": "1615年、大坂夏の陣で豊臣家が滅びました。"}, {"category": "history", "level": "hard", "q": "島原・天草一揆が起きた時期は？", "c": ["1637年", "1600年", "1716年", "1853年"], "a": "1637年", "e": "島原・天草一揆は1637年から起きました。"}, {"category": "history", "level": "hard", "q": "鎖国完成の年とされるのは？", "c": ["1639年", "1603年", "1615年", "1853年"], "a": "1639年", "e": "1639年、ポルトガル船来航禁止で鎖国が完成しました。"}, {"category": "history", "level": "hard", "q": "生類憐みの令で有名な将軍は？", "c": ["徳川綱吉", "徳川家康", "徳川吉宗", "徳川慶喜"], "a": "徳川綱吉", "e": "徳川綱吉は生類憐みの令で知られます。"}, {"category": "history", "level": "hard", "q": "ラクスマンが根室に来航した年は？", "c": ["1792年", "1853年", "1804年", "1774年"], "a": "1792年", "e": "ラクスマンは1792年に根室へ来航しました。"}, {"category": "history", "level": "hard", "q": "レザノフが長崎に来航した年は？", "c": ["1804年", "1792年", "1853年", "1858年"], "a": "1804年", "e": "レザノフは1804年に長崎へ来航しました。"}, {"category": "history", "level": "hard", "q": "日米修好通商条約が結ばれた年は？", "c": ["1858年", "1853年", "1854年", "1867年"], "a": "1858年", "e": "日米修好通商条約は1858年に結ばれました。"}, {"category": "history", "level": "hard", "q": "桜田門外の変が起きた年は？", "c": ["1860年", "1858年", "1867年", "1868年"], "a": "1860年", "e": "井伊直弼は1860年の桜田門外の変で暗殺されました。"}, {"category": "history", "level": "hard", "q": "大政奉還の年は？", "c": ["1867年", "1868年", "1871年", "1854年"], "a": "1867年", "e": "大政奉還は1867年です。"}, {"category": "history", "level": "hard", "q": "戊辰戦争が始まった年は？", "c": ["1868年", "1867年", "1871年", "1877年"], "a": "1868年", "e": "戊辰戦争は1868年に始まりました。"}], "geo": [{"category": "geo", "level": "easy", "q": "日本の首都はどこ？", "c": ["東京", "大阪", "京都", "福岡"], "a": "東京", "e": "日本の首都は東京です。"}, {"category": "geo", "level": "easy", "q": "北海道の道庁所在地は？", "c": ["札幌市", "函館市", "旭川市", "釧路市"], "a": "札幌市", "e": "北海道の道庁所在地は札幌市です。"}, {"category": "geo", "level": "easy", "q": "日本で一番高い山は？", "c": ["富士山", "北岳", "槍ヶ岳", "阿蘇山"], "a": "富士山", "e": "富士山は標高3776mで日本一高い山です。"}, {"category": "geo", "level": "easy", "q": "日本で一番長い川は？", "c": ["信濃川", "利根川", "石狩川", "木曽川"], "a": "信濃川", "e": "日本最長の川は信濃川です。"}, {"category": "geo", "level": "easy", "q": "日本で一番大きい湖は？", "c": ["琵琶湖", "霞ヶ浦", "サロマ湖", "十和田湖"], "a": "琵琶湖", "e": "琵琶湖は滋賀県にあります。"}, {"category": "geo", "level": "easy", "q": "沖縄県の県庁所在地は？", "c": ["那覇市", "石垣市", "名護市", "宮古島市"], "a": "那覇市", "e": "沖縄県の県庁所在地は那覇市です。"}, {"category": "geo", "level": "easy", "q": "青森県の県庁所在地は？", "c": ["青森市", "弘前市", "八戸市", "五所川原市"], "a": "青森市", "e": "青森県の県庁所在地は青森市です。"}, {"category": "geo", "level": "easy", "q": "大阪府の府庁所在地は？", "c": ["大阪市", "堺市", "枚方市", "東大阪市"], "a": "大阪市", "e": "大阪府の府庁所在地は大阪市です。"}, {"category": "geo", "level": "easy", "q": "京都府の府庁所在地は？", "c": ["京都市", "宇治市", "舞鶴市", "福知山市"], "a": "京都市", "e": "京都府の府庁所在地は京都市です。"}, {"category": "geo", "level": "easy", "q": "福岡県の県庁所在地は？", "c": ["福岡市", "北九州市", "久留米市", "飯塚市"], "a": "福岡市", "e": "福岡県の県庁所在地は福岡市です。"}, {"category": "geo", "level": "easy", "q": "四国にある県ではないものは？", "c": ["鳥取県", "香川県", "徳島県", "高知県"], "a": "鳥取県", "e": "鳥取県は中国地方です。"}, {"category": "geo", "level": "easy", "q": "九州にある県はどれ？", "c": ["熊本県", "山梨県", "長野県", "群馬県"], "a": "熊本県", "e": "熊本県は九州地方です。"}, {"category": "geo", "level": "easy", "q": "東北地方にある県はどれ？", "c": ["宮城県", "愛知県", "滋賀県", "岡山県"], "a": "宮城県", "e": "宮城県は東北地方です。"}, {"category": "geo", "level": "easy", "q": "関東地方にある県はどれ？", "c": ["神奈川県", "兵庫県", "広島県", "香川県"], "a": "神奈川県", "e": "神奈川県は関東地方です。"}, {"category": "geo", "level": "easy", "q": "中部地方にある県はどれ？", "c": ["新潟県", "福岡県", "宮崎県", "奈良県"], "a": "新潟県", "e": "新潟県は中部地方に含まれます。"}, {"category": "geo", "level": "easy", "q": "近畿地方にある県はどれ？", "c": ["奈良県", "栃木県", "山形県", "長崎県"], "a": "奈良県", "e": "奈良県は近畿地方です。"}, {"category": "geo", "level": "easy", "q": "中国地方にある県はどれ？", "c": ["広島県", "愛媛県", "佐賀県", "岐阜県"], "a": "広島県", "e": "広島県は中国地方です。"}, {"category": "geo", "level": "easy", "q": "日本海に面している県はどれ？", "c": ["新潟県", "静岡県", "高知県", "三重県"], "a": "新潟県", "e": "新潟県は日本海に面しています。"}, {"category": "geo", "level": "easy", "q": "太平洋に面している県はどれ？", "c": ["静岡県", "山梨県", "長野県", "岐阜県"], "a": "静岡県", "e": "静岡県は太平洋に面しています。"}, {"category": "geo", "level": "easy", "q": "瀬戸内海に面している県はどれ？", "c": ["香川県", "青森県", "山形県", "富山県"], "a": "香川県", "e": "香川県は瀬戸内海に面しています。"}, {"category": "geo", "level": "easy", "q": "富士山がまたがる県は静岡県とどこ？", "c": ["山梨県", "長野県", "岐阜県", "群馬県"], "a": "山梨県", "e": "富士山は静岡県と山梨県にまたがります。"}, {"category": "geo", "level": "easy", "q": "東京ディズニーリゾートがある県は？", "c": ["千葉県", "東京都", "神奈川県", "埼玉県"], "a": "千葉県", "e": "東京ディズニーリゾートは千葉県浦安市にあります。"}, {"category": "geo", "level": "easy", "q": "厳島神社がある県は？", "c": ["広島県", "島根県", "山口県", "岡山県"], "a": "広島県", "e": "厳島神社は広島県の宮島にあります。"}, {"category": "geo", "level": "easy", "q": "金閣寺がある都道府県は？", "c": ["京都府", "奈良県", "滋賀県", "大阪府"], "a": "京都府", "e": "金閣寺は京都府京都市にあります。"}, {"category": "geo", "level": "easy", "q": "原爆ドームがある都市は？", "c": ["広島市", "長崎市", "福岡市", "大阪市"], "a": "広島市", "e": "原爆ドームは広島市にあります。"}, {"category": "geo", "level": "easy", "q": "日本三景の松島がある県は？", "c": ["宮城県", "岩手県", "福島県", "秋田県"], "a": "宮城県", "e": "松島は宮城県にあります。"}, {"category": "geo", "level": "easy", "q": "日本三景の天橋立がある府県は？", "c": ["京都府", "兵庫県", "滋賀県", "福井県"], "a": "京都府", "e": "天橋立は京都府にあります。"}, {"category": "geo", "level": "easy", "q": "日本三景の宮島がある県は？", "c": ["広島県", "山口県", "島根県", "愛媛県"], "a": "広島県", "e": "宮島は広島県にあります。"}, {"category": "geo", "level": "easy", "q": "北海道の南にある大きな島は？", "c": ["本州", "四国", "九州", "沖縄本島"], "a": "本州", "e": "北海道の南には本州があります。"}, {"category": "geo", "level": "easy", "q": "日本の最南端に近い都道府県は？", "c": ["沖縄県", "北海道", "東京都", "青森県"], "a": "沖縄県", "e": "沖縄県は日本の南西部にあります。"}, {"category": "geo", "level": "easy", "q": "山梨県の県庁所在地は？", "c": ["甲府市", "松本市", "静岡市", "前橋市"], "a": "甲府市", "e": "山梨県の県庁所在地は甲府市です。"}, {"category": "geo", "level": "easy", "q": "愛知県の県庁所在地は？", "c": ["名古屋市", "豊橋市", "岡崎市", "一宮市"], "a": "名古屋市", "e": "愛知県の県庁所在地は名古屋市です。"}, {"category": "geo", "level": "easy", "q": "兵庫県の県庁所在地は？", "c": ["神戸市", "姫路市", "西宮市", "尼崎市"], "a": "神戸市", "e": "兵庫県の県庁所在地は神戸市です。"}, {"category": "geo", "level": "easy", "q": "宮城県の県庁所在地は？", "c": ["仙台市", "石巻市", "大崎市", "気仙沼市"], "a": "仙台市", "e": "宮城県の県庁所在地は仙台市です。"}, {"category": "geo", "level": "normal", "q": "アメリカ合衆国の首都は？", "c": ["ワシントンD.C.", "ニューヨーク", "ロサンゼルス", "シカゴ"], "a": "ワシントンD.C.", "e": "アメリカの首都はワシントンD.C.です。"}, {"category": "geo", "level": "normal", "q": "イギリスの首都は？", "c": ["ロンドン", "マンチェスター", "リバプール", "エディンバラ"], "a": "ロンドン", "e": "イギリスの首都はロンドンです。"}, {"category": "geo", "level": "normal", "q": "フランスの首都は？", "c": ["パリ", "リヨン", "マルセイユ", "ニース"], "a": "パリ", "e": "フランスの首都はパリです。"}, {"category": "geo", "level": "normal", "q": "ドイツの首都は？", "c": ["ベルリン", "ミュンヘン", "ハンブルク", "フランクフルト"], "a": "ベルリン", "e": "ドイツの首都はベルリンです。"}, {"category": "geo", "level": "normal", "q": "イタリアの首都は？", "c": ["ローマ", "ミラノ", "ナポリ", "ベネチア"], "a": "ローマ", "e": "イタリアの首都はローマです。"}, {"category": "geo", "level": "normal", "q": "中国の首都は？", "c": ["北京", "上海", "広州", "深圳"], "a": "北京", "e": "中国の首都は北京です。"}, {"category": "geo", "level": "normal", "q": "韓国の首都は？", "c": ["ソウル", "釜山", "仁川", "大邱"], "a": "ソウル", "e": "韓国の首都はソウルです。"}, {"category": "geo", "level": "normal", "q": "インドの首都は？", "c": ["ニューデリー", "ムンバイ", "コルカタ", "チェンナイ"], "a": "ニューデリー", "e": "インドの首都はニューデリーです。"}, {"category": "geo", "level": "normal", "q": "オーストラリアの首都は？", "c": ["キャンベラ", "シドニー", "メルボルン", "パース"], "a": "キャンベラ", "e": "オーストラリアの首都はキャンベラです。"}, {"category": "geo", "level": "normal", "q": "ブラジルの首都は？", "c": ["ブラジリア", "リオデジャネイロ", "サンパウロ", "サルバドール"], "a": "ブラジリア", "e": "ブラジルの首都はブラジリアです。"}, {"category": "geo", "level": "normal", "q": "世界で最も面積が大きい国は？", "c": ["ロシア", "カナダ", "中国", "アメリカ"], "a": "ロシア", "e": "ロシアは世界最大の面積を持つ国です。"}, {"category": "geo", "level": "normal", "q": "世界で人口が多い国の一つは？", "c": ["インド", "ノルウェー", "ニュージーランド", "アイスランド"], "a": "インド", "e": "インドは世界有数の人口大国です。"}, {"category": "geo", "level": "normal", "q": "ナイル川が流れる大陸は？", "c": ["アフリカ大陸", "南アメリカ大陸", "ヨーロッパ大陸", "オーストラリア大陸"], "a": "アフリカ大陸", "e": "ナイル川はアフリカを流れます。"}, {"category": "geo", "level": "normal", "q": "アマゾン川が流れる大陸は？", "c": ["南アメリカ大陸", "アフリカ大陸", "アジア大陸", "ヨーロッパ大陸"], "a": "南アメリカ大陸", "e": "アマゾン川は南アメリカを流れます。"}, {"category": "geo", "level": "normal", "q": "サハラ砂漠がある大陸は？", "c": ["アフリカ大陸", "アジア大陸", "北アメリカ大陸", "南極大陸"], "a": "アフリカ大陸", "e": "サハラ砂漠はアフリカ北部にあります。"}, {"category": "geo", "level": "normal", "q": "アルプス山脈がある地域は？", "c": ["ヨーロッパ", "アフリカ", "南アメリカ", "オセアニア"], "a": "ヨーロッパ", "e": "アルプス山脈はヨーロッパにあります。"}, {"category": "geo", "level": "normal", "q": "ヒマラヤ山脈がある地域は？", "c": ["アジア", "ヨーロッパ", "アフリカ", "北アメリカ"], "a": "アジア", "e": "ヒマラヤ山脈はアジアにあります。"}, {"category": "geo", "level": "normal", "q": "エベレストがある山脈は？", "c": ["ヒマラヤ山脈", "アルプス山脈", "アンデス山脈", "ロッキー山脈"], "a": "ヒマラヤ山脈", "e": "エベレストはヒマラヤ山脈にあります。"}, {"category": "geo", "level": "normal", "q": "アンデス山脈がある大陸は？", "c": ["南アメリカ大陸", "北アメリカ大陸", "アフリカ大陸", "ヨーロッパ大陸"], "a": "南アメリカ大陸", "e": "アンデス山脈は南アメリカ大陸にあります。"}, {"category": "geo", "level": "normal", "q": "ロッキー山脈がある大陸は？", "c": ["北アメリカ大陸", "南アメリカ大陸", "アジア大陸", "アフリカ大陸"], "a": "北アメリカ大陸", "e": "ロッキー山脈は北アメリカにあります。"}, {"category": "geo", "level": "normal", "q": "地中海に面している国は？", "c": ["イタリア", "モンゴル", "ネパール", "ラオス"], "a": "イタリア", "e": "イタリアは地中海に面しています。"}, {"category": "geo", "level": "normal", "q": "赤道が通る国は？", "c": ["エクアドル", "カナダ", "ロシア", "ドイツ"], "a": "エクアドル", "e": "エクアドルは赤道が通る国です。"}, {"category": "geo", "level": "normal", "q": "ピラミッドで有名な国は？", "c": ["エジプト", "ギリシャ", "ペルー", "インド"], "a": "エジプト", "e": "エジプトはピラミッドで有名です。"}, {"category": "geo", "level": "normal", "q": "マチュピチュがある国は？", "c": ["ペルー", "ブラジル", "チリ", "メキシコ"], "a": "ペルー", "e": "マチュピチュはペルーにあります。"}, {"category": "geo", "level": "normal", "q": "グランドキャニオンがある国は？", "c": ["アメリカ", "カナダ", "メキシコ", "オーストラリア"], "a": "アメリカ", "e": "グランドキャニオンはアメリカにあります。"}, {"category": "geo", "level": "normal", "q": "万里の長城がある国は？", "c": ["中国", "韓国", "日本", "モンゴル"], "a": "中国", "e": "万里の長城は中国にあります。"}, {"category": "geo", "level": "normal", "q": "エアーズロックがある国は？", "c": ["オーストラリア", "ニュージーランド", "南アフリカ", "インド"], "a": "オーストラリア", "e": "エアーズロックはオーストラリアにあります。"}, {"category": "geo", "level": "normal", "q": "カンガルーで有名な国は？", "c": ["オーストラリア", "カナダ", "ブラジル", "フランス"], "a": "オーストラリア", "e": "カンガルーはオーストラリアの代表的な動物です。"}, {"category": "geo", "level": "normal", "q": "フィヨルドで有名な国は？", "c": ["ノルウェー", "エジプト", "タイ", "メキシコ"], "a": "ノルウェー", "e": "ノルウェーはフィヨルド地形で有名です。"}, {"category": "geo", "level": "normal", "q": "アマゾン熱帯雨林が広がる国は？", "c": ["ブラジル", "イギリス", "韓国", "エジプト"], "a": "ブラジル", "e": "アマゾン熱帯雨林の多くはブラジルに広がります。"}, {"category": "geo", "level": "normal", "q": "カナダの首都は？", "c": ["オタワ", "トロント", "バンクーバー", "モントリオール"], "a": "オタワ", "e": "カナダの首都はオタワです。"}, {"category": "geo", "level": "normal", "q": "メキシコの首都は？", "c": ["メキシコシティ", "カンクン", "グアダラハラ", "モンテレイ"], "a": "メキシコシティ", "e": "メキシコの首都はメキシコシティです。"}, {"category": "geo", "level": "normal", "q": "スペインの首都は？", "c": ["マドリード", "バルセロナ", "セビリア", "バレンシア"], "a": "マドリード", "e": "スペインの首都はマドリードです。"}, {"category": "geo", "level": "hard", "q": "世界最大の島は？", "c": ["グリーンランド", "ニューギニア島", "ボルネオ島", "マダガスカル島"], "a": "グリーンランド", "e": "世界最大の島はグリーンランドです。"}, {"category": "geo", "level": "hard", "q": "世界最大の湖は？", "c": ["カスピ海", "ビクトリア湖", "スペリオル湖", "バイカル湖"], "a": "カスピ海", "e": "カスピ海は湖として扱われることがあります。"}, {"category": "geo", "level": "hard", "q": "世界で最も深い湖は？", "c": ["バイカル湖", "琵琶湖", "ビクトリア湖", "カスピ海"], "a": "バイカル湖", "e": "バイカル湖は世界最深の湖です。"}, {"category": "geo", "level": "hard", "q": "世界最大級の砂漠は？", "c": ["サハラ砂漠", "ゴビ砂漠", "タクラマカン砂漠", "ナミブ砂漠"], "a": "サハラ砂漠", "e": "サハラ砂漠は世界最大級の砂漠です。"}, {"category": "geo", "level": "hard", "q": "世界最長級の山脈は？", "c": ["アンデス山脈", "アルプス山脈", "ヒマラヤ山脈", "ウラル山脈"], "a": "アンデス山脈", "e": "アンデス山脈は世界最長級の山脈です。"}, {"category": "geo", "level": "hard", "q": "スエズ運河がある国は？", "c": ["エジプト", "パナマ", "トルコ", "ギリシャ"], "a": "エジプト", "e": "スエズ運河はエジプトにあります。"}, {"category": "geo", "level": "hard", "q": "パナマ運河がある国は？", "c": ["パナマ", "コロンビア", "メキシコ", "ブラジル"], "a": "パナマ", "e": "パナマ運河はパナマにあります。"}, {"category": "geo", "level": "hard", "q": "ボスポラス海峡がある国は？", "c": ["トルコ", "エジプト", "イタリア", "スペイン"], "a": "トルコ", "e": "ボスポラス海峡はトルコにあります。"}, {"category": "geo", "level": "hard", "q": "マラッカ海峡に近い国は？", "c": ["マレーシア", "カナダ", "チリ", "ノルウェー"], "a": "マレーシア", "e": "マラッカ海峡は東南アジアの重要な海峡です。"}, {"category": "geo", "level": "hard", "q": "ジブラルタル海峡に近い国は？", "c": ["スペイン", "日本", "インド", "オーストラリア"], "a": "スペイン", "e": "ジブラルタル海峡はスペイン南部付近にあります。"}, {"category": "geo", "level": "hard", "q": "首都がウェリントンの国は？", "c": ["ニュージーランド", "オーストラリア", "南アフリカ", "イギリス"], "a": "ニュージーランド", "e": "ニュージーランドの首都はウェリントンです。"}, {"category": "geo", "level": "hard", "q": "首都がアンカラの国は？", "c": ["トルコ", "ギリシャ", "イラン", "エジプト"], "a": "トルコ", "e": "トルコの首都はアンカラです。"}, {"category": "geo", "level": "hard", "q": "首都がカイロの国は？", "c": ["エジプト", "モロッコ", "南アフリカ", "ケニア"], "a": "エジプト", "e": "エジプトの首都はカイロです。"}, {"category": "geo", "level": "hard", "q": "首都がナイロビの国は？", "c": ["ケニア", "エジプト", "ナイジェリア", "ガーナ"], "a": "ケニア", "e": "ケニアの首都はナイロビです。"}, {"category": "geo", "level": "hard", "q": "首都がブエノスアイレスの国は？", "c": ["アルゼンチン", "ブラジル", "チリ", "ペルー"], "a": "アルゼンチン", "e": "アルゼンチンの首都はブエノスアイレスです。"}, {"category": "geo", "level": "hard", "q": "首都がサンティアゴの国は？", "c": ["チリ", "ペルー", "ボリビア", "コロンビア"], "a": "チリ", "e": "チリの首都はサンティアゴです。"}, {"category": "geo", "level": "hard", "q": "首都がリマの国は？", "c": ["ペルー", "チリ", "ブラジル", "アルゼンチン"], "a": "ペルー", "e": "ペルーの首都はリマです。"}, {"category": "geo", "level": "hard", "q": "首都がバンコクの国は？", "c": ["タイ", "ベトナム", "マレーシア", "インドネシア"], "a": "タイ", "e": "タイの首都はバンコクです。"}, {"category": "geo", "level": "hard", "q": "首都がハノイの国は？", "c": ["ベトナム", "タイ", "ラオス", "カンボジア"], "a": "ベトナム", "e": "ベトナムの首都はハノイです。"}, {"category": "geo", "level": "hard", "q": "首都がジャカルタの国は？", "c": ["インドネシア", "マレーシア", "フィリピン", "シンガポール"], "a": "インドネシア", "e": "インドネシアの首都はジャカルタです。"}, {"category": "geo", "level": "hard", "q": "首都がマニラの国は？", "c": ["フィリピン", "インドネシア", "ベトナム", "タイ"], "a": "フィリピン", "e": "フィリピンの首都はマニラです。"}, {"category": "geo", "level": "hard", "q": "首都がクアラルンプールの国は？", "c": ["マレーシア", "シンガポール", "タイ", "インド"], "a": "マレーシア", "e": "マレーシアの首都はクアラルンプールです。"}, {"category": "geo", "level": "hard", "q": "首都がヘルシンキの国は？", "c": ["フィンランド", "スウェーデン", "ノルウェー", "デンマーク"], "a": "フィンランド", "e": "フィンランドの首都はヘルシンキです。"}, {"category": "geo", "level": "hard", "q": "首都がストックホルムの国は？", "c": ["スウェーデン", "ノルウェー", "フィンランド", "アイスランド"], "a": "スウェーデン", "e": "スウェーデンの首都はストックホルムです。"}, {"category": "geo", "level": "hard", "q": "首都がオスロの国は？", "c": ["ノルウェー", "スウェーデン", "デンマーク", "ドイツ"], "a": "ノルウェー", "e": "ノルウェーの首都はオスロです。"}, {"category": "geo", "level": "hard", "q": "首都がコペンハーゲンの国は？", "c": ["デンマーク", "ノルウェー", "オランダ", "ベルギー"], "a": "デンマーク", "e": "デンマークの首都はコペンハーゲンです。"}, {"category": "geo", "level": "hard", "q": "首都がアムステルダムの国は？", "c": ["オランダ", "ベルギー", "ドイツ", "スイス"], "a": "オランダ", "e": "オランダの首都はアムステルダムです。"}, {"category": "geo", "level": "hard", "q": "首都がブリュッセルの国は？", "c": ["ベルギー", "オランダ", "フランス", "ルクセンブルク"], "a": "ベルギー", "e": "ベルギーの首都はブリュッセルです。"}, {"category": "geo", "level": "hard", "q": "世界最大の海洋は？", "c": ["太平洋", "大西洋", "インド洋", "北極海"], "a": "太平洋", "e": "世界最大の海洋は太平洋です。"}, {"category": "geo", "level": "hard", "q": "世界最小の大陸は？", "c": ["オーストラリア大陸", "ヨーロッパ大陸", "南極大陸", "南アメリカ大陸"], "a": "オーストラリア大陸", "e": "オーストラリア大陸は最小の大陸です。"}, {"category": "geo", "level": "hard", "q": "赤道に近い東南アジアの都市国家は？", "c": ["シンガポール", "韓国", "日本", "モンゴル"], "a": "シンガポール", "e": "シンガポールは赤道に近い都市国家です。"}, {"category": "geo", "level": "hard", "q": "世界で最も高い山は？", "c": ["エベレスト", "キリマンジャロ", "マッキンリー", "モンブラン"], "a": "エベレスト", "e": "エベレストは世界最高峰です。"}, {"category": "geo", "level": "hard", "q": "南極点がある大陸は？", "c": ["南極大陸", "アフリカ大陸", "南アメリカ大陸", "オーストラリア大陸"], "a": "南極大陸", "e": "南極点は南極大陸にあります。"}]};
+
+let selectedCategory = "";
+let currentQuiz = [];
+let current = 0;
+let score = 0;
+let answered = false;
+
+const categoryMenu = document.getElementById("categoryMenu");
+const levelMenu = document.getElementById("levelMenu");
+const quiz = document.getElementById("quiz");
+const categoryTitle = document.getElementById("categoryTitle");
+const categoryName = document.getElementById("categoryName");
+const levelName = document.getElementById("levelName");
+const questionEl = document.getElementById("question");
+const choicesEl = document.getElementById("choices");
+const resultEl = document.getElementById("result");
+const commentEl = document.getElementById("comment");
+const countEl = document.getElementById("count");
+const totalEl = document.getElementById("total");
+const scoreEl = document.getElementById("score");
+const nextBtn = document.getElementById("nextBtn");
+const restartBtn = document.getElementById("restartBtn");
+
+function shuffle(arr) {
+  return arr.sort(() => Math.random() - 0.5);
+}
+
+function getAllQuestions() {
+  if (selectedCategory === "mix") {
+    return [...quizDB.history, ...quizDB.geo];
+  }
+  return quizDB[selectedCategory];
+}
+
+function selectCategory(category) {
+  selectedCategory = category;
+
+  if(category === "history") {
+    categoryTitle.textContent = "🏯 歴史クイズ";
+    categoryName.textContent = "歴史";
+  } else if(category === "geo") {
+    categoryTitle.textContent = "🌏 地理クイズ";
+    categoryName.textContent = "地理";
+  } else {
+    categoryTitle.textContent = "🎲 歴史＋地理ミックス";
+    categoryName.textContent = "ミックス";
+  }
+
+  categoryMenu.classList.add("hidden");
+  levelMenu.classList.remove("hidden");
+}
+
+function startGame(level) {
+  const all = getAllQuestions();
+
+  if(level === "all") {
+    currentQuiz = shuffle([...all]);
+    levelName.textContent = "全問";
+  } else {
+    currentQuiz = shuffle(all.filter(x => x.level === level));
+    levelName.textContent =
+      level === "easy" ? "初級" :
+      level === "normal" ? "中級" : "上級";
+  }
+
+  current = 0;
+  score = 0;
+  scoreEl.textContent = score;
+  totalEl.textContent = currentQuiz.length;
+
+  levelMenu.classList.add("hidden");
+  quiz.classList.remove("hidden");
+  restartBtn.style.display = "none";
+
+  loadQuestion();
+}
+
+function loadQuestion() {
+  answered = false;
+  resultEl.textContent = "";
+  commentEl.textContent = "";
+  nextBtn.style.display = "none";
+  choicesEl.innerHTML = "";
+
+  const q = currentQuiz[current];
+  countEl.textContent = current + 1;
+  questionEl.textContent = q.q;
+
+  shuffle([...q.c]).forEach(choice => {
+    const btn = document.createElement("button");
+    btn.textContent = choice;
+    btn.onclick = () => checkAnswer(btn, choice);
+    choicesEl.appendChild(btn);
+  });
+}
+
+function checkAnswer(button, selected) {
+  if(answered) return;
+  answered = true;
+
+  const q = currentQuiz[current];
+  const buttons = choicesEl.querySelectorAll("button");
+
+  buttons.forEach(btn => {
+    btn.disabled = true;
+    if(btn.textContent === q.a) btn.classList.add("correct");
+  });
+
+  if(selected === q.a) {
+    score += 10;
+    scoreEl.textContent = score;
+    resultEl.textContent = "正解！";
+  } else {
+    button.classList.add("wrong");
+    resultEl.textContent = "不正解…";
+  }
+
+  commentEl.textContent = q.e;
+
+  if(current < currentQuiz.length - 1) {
+    nextBtn.style.display = "inline-block";
+  } else {
+    finishGame();
+  }
+}
+
+function nextQuestion() {
+  current++;
+  loadQuestion();
+}
+
+function finishGame() {
+  const max = currentQuiz.length * 10;
+  const rate = Math.round(score / max * 100);
+
+  questionEl.textContent = "ゲーム終了！";
+  choicesEl.innerHTML = "";
+  nextBtn.style.display = "none";
+  restartBtn.style.display = "inline-block";
+
+  commentEl.textContent = `スコアは ${score}/${max} 点、正答率 ${rate}% です。`;
+
+  if(rate === 100) {
+    resultEl.textContent = "🏆 全問正解！クイズ博士です！";
+  } else if(rate >= 80) {
+    resultEl.textContent = "🎉 かなり優秀です！";
+  } else if(rate >= 50) {
+    resultEl.textContent = "👍 まずまずです！";
+  } else {
+    resultEl.textContent = "📚 もう一度挑戦しよう！";
+  }
+}
+
+function backToCategory() {
+  levelMenu.classList.add("hidden");
+  categoryMenu.classList.remove("hidden");
+}
+
+function backToLevel() {
+  quiz.classList.add("hidden");
+  levelMenu.classList.remove("hidden");
+}
+</script>
+</body>
+</html>
